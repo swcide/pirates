@@ -3,12 +3,10 @@ package com.pirates.web.dto.response;
 import com.pirates.web.domain.delivery.Delivery;
 import com.pirates.web.domain.holiday.Holiday;
 import com.pirates.web.domain.holiday.HolidayQueryRepository;
-import com.pirates.web.domain.holiday.HolidayRepository;
 import com.pirates.web.domain.option.Options;
 import com.pirates.web.domain.store.Store;
 import com.pirates.web.domain.store.StoreRepository;
 import com.pirates.web.dto.request.StoreRequestDto;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
 @Transactional
@@ -107,10 +105,48 @@ class StoreArrivesDateResponseDtoTest {
     @DisplayName("수령일 계산")
     public void getArrivesDate() {
 
-        LocalDateTime now = LocalDateTime.now().minusDays(2L);
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now2 = LocalDateTime.now().plusDays(2);
+        LocalDateTime now3 = LocalDateTime.now().minusDays(2);
         Store store = storeRepository.getById(1L);
+        Store store2 = storeRepository.getById(2L);
         List<Holiday> holidayList = holidayQueryRepository.findHoliday(now.toLocalDate());
+        List<Holiday> holidayList2 = holidayQueryRepository.findHoliday(now2.toLocalDate());
+        List<Holiday> holidayList3 = holidayQueryRepository.findHoliday(now3.toLocalDate());
 
+        List<StoreArrivesDateResponseDto> storeArrivesDateResponseDtoList = getStoreArrivesDateResponseDtos(now, store, holidayList);
+        List<StoreArrivesDateResponseDto> storeArrivesDateResponseDtoList2 = getStoreArrivesDateResponseDtos(now2, store, holidayList2);
+        List<StoreArrivesDateResponseDto> storeArrivesDateResponseDtoList3 = getStoreArrivesDateResponseDtos(now3, store, holidayList3);
+
+        List<StoreArrivesDateResponseDto> storeArrivesDateResponseDtoList4 = getStoreArrivesDateResponseDtos(now, store2, holidayList);
+        List<StoreArrivesDateResponseDto> storeArrivesDateResponseDtoList5 = getStoreArrivesDateResponseDtos(now2, store2, holidayList2);
+        List<StoreArrivesDateResponseDto> storeArrivesDateResponseDtoList6 = getStoreArrivesDateResponseDtos(now3, store2, holidayList3);
+
+
+
+        assertEquals(storeArrivesDateResponseDtoList.size(),5);
+        // 노르웨이 연어
+        assertEquals(storeArrivesDateResponseDtoList.get(0).getDate(),"10월 13일 수요일");
+        assertEquals(storeArrivesDateResponseDtoList.get(1).getDate(),"10월 14일 목요일");
+
+        assertEquals(storeArrivesDateResponseDtoList2.get(0).getDate(),"10월 13일 수요일");
+        assertEquals(storeArrivesDateResponseDtoList2.get(1).getDate(),"10월 14일 목요일");
+
+        assertEquals(storeArrivesDateResponseDtoList3.get(0).getDate(),"10월 12일 화요일");
+        assertEquals(storeArrivesDateResponseDtoList3.get(1).getDate(),"10월 13일 수요일");
+
+        // 완도 전복
+        assertEquals(storeArrivesDateResponseDtoList4.get(0).getDate(),"10월 13일 수요일");
+        assertEquals(storeArrivesDateResponseDtoList4.get(1).getDate(),"10월 14일 목요일");
+
+        assertEquals(storeArrivesDateResponseDtoList5.get(0).getDate(),"10월 14일 목요일");
+        assertEquals(storeArrivesDateResponseDtoList5.get(1).getDate(),"10월 15일 금요일");
+
+        assertEquals(storeArrivesDateResponseDtoList6.get(0).getDate(),"10월 13일 수요일");
+        assertEquals(storeArrivesDateResponseDtoList6.get(1).getDate(),"10월 14일 목요일");
+    }
+
+    private List<StoreArrivesDateResponseDto> getStoreArrivesDateResponseDtos(LocalDateTime now, Store store, List<Holiday> holidayList) {
         Long countDate = 0L;
 
         // 모든 휴일이 담긴 dateList
@@ -119,7 +155,6 @@ class StoreArrivesDateResponseDtoTest {
         List<LocalDate> dateListExceptSat = holidayList.stream()
                 .filter(holiday -> !holiday.getDateName().equals("토요일"))
                 .map(Holiday::getDate).collect(Collectors.toList());
-
 
         // 주말에 주문하게 될 시 다음 주 평일 배송이지 않을까?
         if(!dateList.contains(now.toLocalDate())) {
@@ -154,9 +189,6 @@ class StoreArrivesDateResponseDtoTest {
             }
             i++;
         }
-
-        assertEquals(storeArrivesDateResponseDtoList.size(),5);
-        assertEquals(storeArrivesDateResponseDtoList.get(0).getDate(),"10월 12일 화요일");
-        assertEquals(storeArrivesDateResponseDtoList.get(1).getDate(),"10월 13일 수요일");
+        return storeArrivesDateResponseDtoList;
     }
 }
